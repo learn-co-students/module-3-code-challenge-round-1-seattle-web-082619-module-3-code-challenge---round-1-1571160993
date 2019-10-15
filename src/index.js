@@ -3,9 +3,6 @@ const imageURL = `https://randopic.herokuapp.com/images/${imageId}`;
 const likeURL = `https://randopic.herokuapp.com/likes/`;
 const commentsURL = `https://randopic.herokuapp.com/comments/`;
 
-//todo: delete this? move this?
-let imageSRC = "";
-
 //target relevant elements
 const imageCard = document.getElementById('image_card');
 const imageTitle = document.getElementById('image_name');
@@ -29,13 +26,31 @@ function handleFormSubmit() {
   comment_form.addEventListener('submit', (event) => {
     event.preventDefault();
     console.log(event.target['comment'].value);
-    const comment = event.target['comment'].value;
-    createComment(comment);
+    const comment = event.target['comment'];
+
+    writeSingleCommentToDOM(comment);
+    //commentsArr.push(comment.value);
+
+    const config = {
+      method: 'post',
+      headers: {
+        'content-type': 'application/json',
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({
+        content: comment.value,
+        image_id: imageId
+      })
+    };
+
+    postNewCommentToDB(config);
   });
 }
 
-function createComment() {
-  
+function postNewCommentToDB(config) {
+  fetch(commentsURL, config)
+  .then(res => console.log(res))
+  .catch(err => console.log("ERROR:", err));
 }
 
 function postLikesToDB(likesAmount) {
@@ -47,7 +62,6 @@ function postLikesToDB(likesAmount) {
     },
     body: JSON.stringify({
         like_count: likesAmount,
-        image: image.src,
         image_id: imageId
       })
   };
@@ -74,7 +88,6 @@ function fetchImage() {
 }
 
 function writeImageToDOM(image) {
-  console.log(image)
   imageEle.setAttribute('src', image.url);
   imageTitle.textContent = image.name;
   likesSpan.append(image.like_count);
@@ -84,12 +97,22 @@ function writeImageToDOM(image) {
 
 function createComment(comment) {
   const commentLi = document.createElement('li');
-  commentLi.textContent = comment.content;
+
+  if (comment.content !== undefined){
+    commentLi.textContent = comment.content; //create from fetch obj value
+  } else {
+    commentLi.textContent = comment.value; //create from form value
+  }
+
   return commentLi;
+}
+
+function writeSingleCommentToDOM(comment) {
+  commentsUl.appendChild(createComment(comment));
 }
 
 function writeCommentsToDOM(image) {
   for (const comment of image.comments) {
-    commentsUl.appendChild(createComment(comment));
+    writeSingleCommentToDOM(comment);
   }
 }
